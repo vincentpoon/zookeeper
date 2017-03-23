@@ -45,6 +45,7 @@ import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.OutputStreamStatement;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.PathUtils;
+import org.apache.zookeeper.common.RateLimiter;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -70,6 +71,10 @@ public class QuorumPeerConfig {
     protected String configFileStr = null;
     protected int tickTime = ZooKeeperServer.DEFAULT_TICK_TIME;
     protected int maxClientCnxns = 60;
+    // class name of the rate limiter implementation to use
+    private static String rateLimiterImpl = null;
+    private static int clientCnxnRate = RateLimiter.BYPASS;
+    private static int clientCnxnBurst = RateLimiter.BYPASS;
     /** defaults to -1 if not set explicitly */
     protected int minSessionTimeout = -1;
     /** defaults to -1 if not set explicitly */
@@ -245,6 +250,12 @@ public class QuorumPeerConfig {
                 tickTime = Integer.parseInt(value);
             } else if (key.equals("maxClientCnxns")) {
                 maxClientCnxns = Integer.parseInt(value);
+            } else if (key.equals("rateLimiterImpl")) {
+                setRateLimiterImpl(value.trim());
+            } else if (key.equals("clientCnxnRate")) {
+                setClientCnxnRate(Integer.parseInt(value));
+            } else if (key.equals("clientCnxnBurst")) {
+                setClientCnxnBurst(Integer.parseInt(value));
             } else if (key.equals("minSessionTimeout")) {
                 minSessionTimeout = Integer.parseInt(value);
             } else if (key.equals("maxSessionTimeout")) {
@@ -748,6 +759,48 @@ public class QuorumPeerConfig {
 
     public static void setReconfigEnabled(boolean enabled) {
         reconfigEnabled = enabled;
+    }
+
+    /**
+     * @return the {@code RateLimiter} to use
+     */
+    public static String getRateLimiterImpl() {
+        return rateLimiterImpl;
+    }
+
+    /**
+     * @param rateLimiterImplClass the {@code RateLimiter} implementation to use
+     */
+    public static void setRateLimiterImpl(String rateLimiterImplClass) {
+        QuorumPeerConfig.rateLimiterImpl = rateLimiterImplClass;
+    }
+
+    /**
+     * @return the max client connection rate
+     */
+    public static int getClientCnxnRate() {
+        return clientCnxnRate;
+    }
+
+    /**
+     * @param clientCnxnRate the max client connection rate
+     */
+    public static void setClientCnxnRate(int clientCnxnRate) {
+        QuorumPeerConfig.clientCnxnRate = clientCnxnRate;
+    }
+
+    /**
+     * @return the max client connection burst
+     */
+    public static int getClientCnxnBurst() {
+        return clientCnxnBurst;
+    }
+
+    /**
+     * @param clientCnxnBurst the max client connection burst
+     */
+    public static void setClientCnxnBurst(int clientCnxnBurst) {
+        QuorumPeerConfig.clientCnxnBurst = clientCnxnBurst;
     }
 
 }
